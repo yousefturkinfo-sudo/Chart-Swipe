@@ -77,6 +77,16 @@ const FinLitCard: React.FC<FinLitCardProps> = ({ lesson, onComplete, learningSty
     }
   };
 
+  // Helper to parse **bold** text
+  const renderFormattedText = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, index) => 
+        index % 2 === 1 
+        ? <span key={index} className="text-white font-black not-italic">{part}</span> 
+        : part
+    );
+  };
+
   return (
     <div ref={cardRef} className="relative w-full max-w-md h-[700px] perspective-1000 overflow-y-auto hide-scrollbar rounded-3xl bg-[#1c2128] border border-white/10 shadow-2xl flex flex-col transition-all duration-500">
       
@@ -124,7 +134,7 @@ const FinLitCard: React.FC<FinLitCardProps> = ({ lesson, onComplete, learningSty
                     </div>
 
                     <div className="prose prose-invert prose-sm text-gray-300 leading-relaxed font-mono text-xs md:text-sm min-h-[120px]">
-                        <p className="whitespace-pre-line">{displayedText}</p>
+                        <p className="whitespace-pre-line">{renderFormattedText(displayedText)}</p>
                     </div>
                 </div>
 
@@ -183,7 +193,7 @@ const FinLitCard: React.FC<FinLitCardProps> = ({ lesson, onComplete, learningSty
                 <div className="bg-[#0d1117] p-5 rounded-2xl mb-8 w-full border border-white/10 text-left">
                     <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Tactical Debrief</h4>
                     <p className="text-sm text-gray-200 font-medium leading-relaxed">
-                        {lesson.feedback}
+                        {renderFormattedText(lesson.feedback)}
                     </p>
                 </div>
 

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Candle, ChartAnnotation, ChartSkin } from '../types';
 import { SoundService } from '../services/soundService';
-import { ComposedChart, Line, Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts';
+import { ComposedChart, Line, Area, AreaChart, ResponsiveContainer, YAxis, ReferenceLine, ReferenceArea } from 'recharts';
 
 interface LessonChartProps {
   candles: Candle[];
@@ -75,13 +75,13 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
   const activeCandle = hoverIndex !== null ? candles[hoverIndex] : null;
 
   // Chart Data for Recharts (SMA/RSI)
-  // We align this with the visualCandles for the SVG loop
-  const chartData = visibleCandles.map(d => ({
+  const chartData = visibleCandles.map((d, i) => ({
       ...d,
+      index: i, // For Recharts XAxis mapping if needed
       color: d.close >= d.open ? theme.up : theme.down
   }));
 
-  // Pattern Highlight Box Logic
+  // Pattern Highlight Box Logic (for SVG)
   let boxX = 0, boxWidth = 0, boxTop = 0, boxHeight = 0;
   if (highlightRange && visibleCount >= candles.length) {
       const { start, end } = highlightRange;
@@ -138,7 +138,7 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
       {/* --- MAIN CHART AREA --- */}
       <div className="absolute inset-0 pt-16 px-4 pb-4 z-10">
         
-        {/* RECHARTS LAYER (SMA) */}
+        {/* RECHARTS LAYER (SMA + Overlays) */}
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData}>
              <YAxis domain={[min, max]} hide />
@@ -151,6 +151,7 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
                     </feMerge>
                 </filter>
              </defs>
+             
              {/* SMA Line */}
              <Line 
                 type="monotone" 
@@ -161,6 +162,34 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
                 isAnimationActive={false} 
                 style={{ filter: 'url(#glow)' }}
              />
+
+             {/* Dynamic Overlays from Curriculum */}
+             {annotations && annotations.map((ann, i) => {
+                 if (ann.type === 'LINE' && ann.price) {
+                     return (
+                         <ReferenceLine 
+                            key={i} 
+                            y={ann.price} 
+                            stroke={ann.color || theme.text} 
+                            strokeDasharray="5 5" 
+                            label={{ position: 'right', value: ann.text, fill: ann.color || theme.text, fontSize: 10, fontWeight: 'bold' }} 
+                         />
+                     );
+                 }
+                 if (ann.type === 'ZONE' && ann.price && ann.endPrice) {
+                     return (
+                         <ReferenceArea 
+                            key={i} 
+                            y1={ann.price} 
+                            y2={ann.endPrice} 
+                            fill={ann.color || 'rgba(0, 255, 148, 0.2)'} 
+                            fillOpacity={0.3} 
+                         />
+                     );
+                 }
+                 return null;
+             })}
+
           </ComposedChart>
         </ResponsiveContainer>
 
@@ -223,9 +252,13 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
                     )
                 })}
 
-                {/* EDUCATIONAL ANNOTATIONS */}
+                {/* EDUCATIONAL ANNOTATIONS (Arrows / Labels) */}
                 {annotations && visibleCount >= candles.length && annotations.map((ann, i) => {
-                    const c = candles[ann.index];
+                    // Skip LINE/ZONE here as Recharts handles them
+                    if (ann.type === 'LINE' || ann.type === 'ZONE') return null;
+
+                    const idx = ann.index ?? (candles.length - 1);
+                    const c = candles[idx];
                     if (!c) return null;
                     
                     let yPrice = ann.price;
@@ -237,7 +270,7 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
                     }
 
                     const widthPercent = 100 / candles.length;
-                    const cx = (ann.index * widthPercent) + (widthPercent / 2);
+                    const cx = (idx * widthPercent) + (widthPercent / 2);
                     const cy = normalize(yPrice); 
 
                     return (
@@ -249,18 +282,18 @@ const LessonChart: React.FC<LessonChartProps> = ({ candles, highlightRange, patt
                             {/* Arrow UP */}
                             {ann.type === 'ARROW_UP' && (
                                 <>
-                                    <path d={`M ${cx}% ${cy + 15}% L ${cx}% ${cy + 2}%`} stroke={theme.up} strokeWidth="2" markerEnd="url(#arrowhead)"/>
-                                    <rect x={`${cx - 10}%`} y={`${cy + 16}%`} width="20%" height="8%" rx="4" fill="black" stroke={theme.up} strokeWidth="1"/>
-                                    <text x={`${cx}%`} y={`${cy + 21}%`} textAnchor="middle" fill={theme.up} fontSize="8" fontWeight="bold" fontFamily="monospace">{ann.text}</text>
+                                    <path d={`M ${cx}% ${cy + 15}% L ${cx}% ${cy + 2}%`} stroke={ann.color || theme.up} strokeWidth="2" markerEnd="url(#arrowhead)"/>
+                                    <rect x={`${cx - 10}%`} y={`${cy + 16}%`} width="20%" height="8%" rx="4" fill="black" stroke={ann.color || theme.up} strokeWidth="1"/>
+                                    <text x={`${cx}%`} y={`${cy + 21}%`} textAnchor="middle" fill={ann.color || theme.up} fontSize="8" fontWeight="bold" fontFamily="monospace">{ann.text}</text>
                                 </>
                             )}
 
                             {/* Arrow DOWN */}
                             {ann.type === 'ARROW_DOWN' && (
                                 <>
-                                    <path d={`M ${cx}% ${cy - 15}% L ${cx}% ${cy - 2}%`} stroke={theme.down} strokeWidth="2"/>
-                                    <rect x={`${cx - 10}%`} y={`${cy - 24}%`} width="20%" height="8%" rx="4" fill="black" stroke={theme.down} strokeWidth="1"/>
-                                    <text x={`${cx}%`} y={`${cy - 19}%`} textAnchor="middle" fill={theme.down} fontSize="8" fontWeight="bold" fontFamily="monospace">{ann.text}</text>
+                                    <path d={`M ${cx}% ${cy - 15}% L ${cx}% ${cy - 2}%`} stroke={ann.color || theme.down} strokeWidth="2"/>
+                                    <rect x={`${cx - 10}%`} y={`${cy - 24}%`} width="20%" height="8%" rx="4" fill="black" stroke={ann.color || theme.down} strokeWidth="1"/>
+                                    <text x={`${cx}%`} y={`${cy - 19}%`} textAnchor="middle" fill={ann.color || theme.down} fontSize="8" fontWeight="bold" fontFamily="monospace">{ann.text}</text>
                                 </>
                             )}
 

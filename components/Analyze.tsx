@@ -53,6 +53,16 @@ const Analyze: React.FC = () => {
       setIsLoading(false);
   };
 
+  // Helper to parse **bold** text
+  const renderFormattedText = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, index) => 
+        index % 2 === 1 
+        ? <span key={index} className="text-white font-black not-italic">{part}</span> 
+        : part
+    );
+  };
+
   return (
     <div className="flex flex-col items-center px-6 pt-24 pb-32 min-h-screen w-full">
       <h2 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-2">
@@ -82,7 +92,7 @@ const Analyze: React.FC = () => {
       </div>
 
       <p className="text-gray-400 text-center text-sm mb-6 max-w-xs leading-relaxed">
-        {mode === 'ANALYZE' && "Upload a chart. I'll identify the trend, patterns, and indicators."}
+        {mode === 'ANALYZE' && "Upload a chart. I'll identify the overall trend, patterns, and indicators."}
         {mode === 'SIGNALS' && "Upload a setup. I'll give you precise Stop Loss & Take Profit levels."}
         {mode === 'ROAST' && "Upload your worst trade. I will destroy your ego."}
       </p>
@@ -139,7 +149,7 @@ const Analyze: React.FC = () => {
             </h3>
           </div>
           <div className="text-gray-300 text-sm leading-relaxed font-medium whitespace-pre-wrap font-mono">
-            {analysis}
+            {renderFormattedText(analysis)}
           </div>
           
           {/* Social Share Placeholder */}

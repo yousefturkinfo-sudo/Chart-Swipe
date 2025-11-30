@@ -266,72 +266,9 @@ export const BackendService = {
   },
 
   fetchModulesWithLessons: async (): Promise<AcademyModule[]> => {
-    try {
-        const { data: modulesData, error: modError } = await supabase
-            .from('modules')
-            .select('*')
-            .order('order_index', { ascending: true });
-        
-        if (modError || !modulesData || modulesData.length === 0) {
-            return CURRICULUM;
-        }
-
-        const { data: lessonsData, error: lessError } = await supabase
-            .from('lessons')
-            .select('*')
-            .order('order_index', { ascending: true });
-            
-        if (lessError) throw lessError;
-
-        const modules: AcademyModule[] = modulesData.map((m: any) => {
-             const moduleLessons = lessonsData
-                .filter((l: any) => l.module_id === m.id)
-                .map((l: any) => {
-                    let qData = { question: "", left: "", right: "", correct: "LEFT", feedback: "" };
-                    if (l.question_data) {
-                        try { qData = l.question_data; } catch(e) {}
-                    } else {
-                        qData = {
-                            question: l.question,
-                            left: l.left_option || "Option A",
-                            right: l.right_option || "Option B",
-                            correct: l.correct_side || "LEFT",
-                            feedback: l.feedback || "..."
-                        }
-                    }
-                    
-                    return {
-                        id: l.id,
-                        title: l.title,
-                        content: l.content || l.content_json, 
-                        question: qData.question,
-                        leftOption: qData.left,
-                        rightOption: qData.right,
-                        correctSide: qData.correct as 'LEFT' | 'RIGHT',
-                        feedback: qData.feedback,
-                        orderIndex: l.order_index
-                    } as AcademyLesson;
-                });
-                
-             return {
-                 id: m.id,
-                 track: m.track as LearningTrack,
-                 title: m.title,
-                 description: m.description,
-                 icon: m.icon,
-                 color: m.color,
-                 orderIndex: m.order_index,
-                 isLockedByDefault: m.is_locked_by_default,
-                 lessons: moduleLessons,
-                 difficultyTier: m.difficulty_tier,
-                 tags: m.tags
-             };
-        });
-        
-        return modules;
-    } catch (e) {
-        return CURRICULUM;
-    }
+    // NOTE: We now use the local CURRICULUM file as the master source for content
+    // This avoids SQL database seeding issues while keeping completion status live.
+    return CURRICULUM;
   },
 
   fetchUserProgress: async (userId: string): Promise<string[]> => {

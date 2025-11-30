@@ -249,7 +249,6 @@ const App: React.FC = () => {
   const handleBreakBond = (moduleId: string) => {
       const COST = 12.5;
       if (stats.candles >= COST) {
-          // Deduct candles
           setStats(prev => ({
               ...prev,
               candles: prev.candles - COST,
@@ -415,6 +414,16 @@ const App: React.FC = () => {
     loadNewScenario();
   };
 
+  // Helper to render bold text
+  const renderFormattedText = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, index) => 
+        index % 2 === 1 
+        ? <span key={index} className="text-white font-black not-italic">{part}</span> 
+        : part
+    );
+  };
+
   if (isLoadingAuth) {
       return (
           <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center relative overflow-hidden">
@@ -567,7 +576,7 @@ const App: React.FC = () => {
                                 <span className="text-[10px] font-bold text-neon-green uppercase tracking-widest">Intelligence Report</span>
                             </div>
                             <p className="text-sm text-gray-300 leading-relaxed font-medium">
-                                {guruMsg || "Analyzing market data..."}
+                                {renderFormattedText(guruMsg || "Analyzing market data...")}
                             </p>
                         </div>
 

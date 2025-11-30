@@ -78,6 +78,8 @@ export enum PatternType {
   RISING_WEDGE = 'Rising Wedge',
   BROADENING_WEDGE = 'Broadening Wedge',
   FAKE_OUT = 'Fakeout',
+  SUPPORT_FLIP = 'Support Flip',
+  RESISTANCE_FLIP = 'Resistance Flip',
 
   // --- HARMONIC PATTERNS ---
   GARTLEY = 'Gartley Pattern',
@@ -175,10 +177,12 @@ export interface Candle {
 }
 
 export interface ChartAnnotation {
-  index: number;      // Candle index to point to
+  index?: number;      // Candle index to point to (optional for lines)
   price?: number;     // Specific price level (y-axis)
+  endPrice?: number;  // For zones (y-axis max)
   text: string;       // Label text
-  type: 'LABEL' | 'ARROW_UP' | 'ARROW_DOWN' | 'ZONE';
+  type: 'LABEL' | 'ARROW_UP' | 'ARROW_DOWN' | 'ZONE' | 'LINE';
+  color?: string;
 }
 
 export interface ChartScenario {
