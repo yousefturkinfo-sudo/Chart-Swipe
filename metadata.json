@@ -1,0 +1,8 @@
+{
+  "name": "Chart//Swipe",
+  "description": "The Duolingo for Day Trading. Gamified technical analysis learning with high-stakes dopamine loops.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
